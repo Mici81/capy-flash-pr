@@ -628,6 +628,11 @@ std::optional<AdmissionCandidate> ProgramImpl::inspect_lane(
                     continue;
                 }
                 unique.push_back(state);
+                // A checkpoint image another owner also references (a shared prefix published at
+                // the same frontier) stays in global occupancy, as on the rewrite-restore path:
+                // counting it here would size the active entitlement for an image the sequence
+                // does not own, and start_sequence would have to find the missing slot itself.
+                if (!state_exclusive_to_sequence(*source, state)) { continue; }
                 const StateReplicaResidency residency = state_store->residency(state);
                 if (residency == StateReplicaResidency::DeviceOnly ||
                     residency == StateReplicaResidency::Both) {
